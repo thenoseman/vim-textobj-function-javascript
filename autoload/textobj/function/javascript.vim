@@ -104,7 +104,7 @@ function! s:function_range()
       endif
     endif
 
-    while search('\S', 'W') != 0 && s:cursor_syn() ==# 'Comment'
+    while search('\S', 'W') != 0 && s:cursor_syn() ==# 'jsComment'
     endwhile
     if s:cursor_char() == '{'
       call s:jump_to_pair()
@@ -113,7 +113,7 @@ function! s:function_range()
       let s:head = getpos('.') " to inner
 
       while search('[])}[({,;]', 'W')
-        if s:cursor_syn() =~# '\%(Constant\|Comment\)'
+        if s:cursor_syn() =~# '\%(jsBuiltinValues\|jsComment\|jsRegexpUnicodeValue\)'
           continue
         endif
         let char = s:cursor_char()
@@ -154,7 +154,7 @@ function! s:function_range()
   endif
   call s:jump_to_pair()
   
-  while search('\S', 'W') != 0 && s:cursor_syn() ==# 'Comment'
+  while search('\S', 'W') != 0 && s:cursor_syn() ==# 'jsComment'
   endwhile
   if s:cursor_char() != '{'
     return 0
@@ -184,7 +184,7 @@ function! s:cursor_char()
 endfunction
 
 function! s:cursor_syn()
-  return synIDattr(synIDtrans(synID(line('.'), col('.'), 0)), 'name')
+  return synIDattr(synID(line('.'), col('.'), 0), 'name')
 endfunction
 
 let &cpo = s:save_cpo
