@@ -88,8 +88,13 @@ endfunction
 function! s:function_range()
   let start = getpos('.')
   " look backward for function definition or fat arrow
-  while search('\v(<async>\s+)?(<function>|(\(%(\k|,|\s)*\)|\k+)\s*\=\>\s*)', 'bcW') != 0
+  let prev = start
+  while search('\v<function>|(\(%(\k|\.\.\.|,|\s)*\)|\k+)\s*\=\>\s*', 'bcW') != 0
     let b = getpos('.')
+    if b ==# prev
+      break
+    endif
+    let prev = b
 
     " go to either the start of the function argument list or right after the fat arrow
     if (search('\v(<async>\s+)?(<function>\s*\k*\s*\(|\=\>\s*)', 'ceW'))
@@ -130,7 +135,34 @@ function! s:function_range()
     endif
     return [b, e]
   endwhile
-  return 0
+
+  call setpos('.', start)
+  
+  " handle ES6 class method. back to something like "foo("
+  if !search('\v\k+\s*\(', 'bcW')
+    return 0
+  endif
+  let b = getpos('.')
+  call s:left()
+  " in left side back, syntax have Class identifier
+  if s:cursor_syn() !~ 'jsClass'
+    return 0
+  endif
+  " move forward to the end of block
+  if !search('(', 'ceW')
+    return 0
+  endif
+  call s:jump_to_pair()
+  
+  while search('\S', 'W') != 0 && s:cursor_syn() ==# 'Comment'
+  endwhile
+  if s:cursor_char() != '{'
+    return 0
+  endif
+  call s:jump_to_pair()
+  
+  let e = getpos('.')
+  return [b, e]
 endfunction
 
 function! s:jump_to_pair()
